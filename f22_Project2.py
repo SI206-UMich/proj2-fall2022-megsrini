@@ -111,9 +111,11 @@ def get_listing_information(listing_id):
     for rooms in room_list:
         first_room_list.append(rooms.text)
     for rooms in first_room_list:
-        room = re.findall('\d bedroom',rooms)
-        final_room_list.extend(room)   
-    if 'studio' in final_room_list[0]:
+        room = re.findall('\d [a-z]* *bedroom',rooms)
+        room1 = re.findall('Studio*',rooms)
+        final_room_list.extend(room) 
+        final_room_list.extend(room1) 
+    if 'Studio' in final_room_list[0]:
         bedroom = 1
     else: 
         bedroom = int(final_room_list[0][0])
@@ -135,8 +137,17 @@ def get_detailed_listing_database(html_file):
         ...
     ]
     """
-    pass
-
+    listing_id_list = []
+    first_function = get_listings_from_search_results(html_file)
+    second_function = []
+    final = []
+    for tuple in first_function: 
+        listing_id_list.append(tuple[-1])
+    for id in listing_id_list:
+        second_function.append(get_listing_information(id))
+    for i in range(len(first_function)): 
+        final.append(first_function[i]+second_function[i])
+    return final
 
 def write_csv(data, filename):
     """
@@ -256,14 +267,11 @@ class TestCases(unittest.TestCase):
             # assert each item in the list of listings is a tuple
             self.assertEqual(type(item), tuple)
             # check that each tuple has a length of 6
-
+            self.assertEqual(len(item), 6)
         # check that the first tuple is made up of the following:
-        # 'Loft in Mission District', 210, '1944564', '2022-004088STR', 'Entire Room', 1
-
+        self.assertEqual(detailed_database[0], ('Loft in Mission District', 210, '1944564', '2022-004088STR', 'Entire Room', 1))
         # check that the last tuple is made up of the following:
-        # 'Guest suite in Mission District', 238, '32871760', 'STR-0004707', 'Entire Room', 1
-
-        pass
+        self.assertEqual(detailed_database[-1], ('Guest suite in Mission District', 238, '32871760', 'STR-0004707', 'Entire Room', 1))
 
     def test_write_csv(self):
         # call get_detailed_listing_database on "html_files/mission_district_search_results.html"
