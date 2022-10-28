@@ -51,10 +51,6 @@ def get_listings_from_search_results(html_file):
     page.close()
     return final
 
-get_listings_from_search_results("html_files/mission_district_search_results.html")
-
-
-
 
 def get_listing_information(listing_id):
     """
@@ -80,8 +76,50 @@ def get_listing_information(listing_id):
         number of bedrooms
     )
     """
-    pass
-
+    number_list = []
+    type_list = []
+    first_room_list = []
+    final_room_list = []
+    page = open('html_files/listing_'+listing_id+'.html')
+    soup = BeautifulSoup(page,'html.parser')
+    policy_number_list = soup.find_all('li',class_="f19phm7j dir dir-ltr")
+    for policy in policy_number_list:
+        number = policy.find('span',class_="ll4r2nl dir dir-ltr")
+        number_list.append(number.text)
+    policy_number = number_list[0]
+    if "Exempt" in policy_number:
+        policy_number = "Exempt"
+    elif "Pending" in policy_number: 
+        policy_number = "Pending"
+    else: 
+        policy_number = number_list[0]
+    place_list = soup.find_all('h2',class_="_14i3z6h")
+    for place in place_list: 
+        type_list.append(place.text)
+    place_type = type_list[0]
+    if "Private" in place_type:
+        place_type = "Private Room"
+    elif "private" in place_type:
+        place_type = "Private Room"
+    elif "Shared" in place_type: 
+        place_type = "Shared Room"
+    elif "shared" in place_type: 
+        place_type = "Shared Room"
+    else: 
+        place_type = "Entire Room"
+    room_list = soup.find_all('li',class_="l7n4lsf dir dir-ltr")
+    for rooms in room_list:
+        first_room_list.append(rooms.text)
+    for rooms in first_room_list:
+        room = re.findall('\d bedroom',rooms)
+        final_room_list.extend(room)   
+    if 'studio' in final_room_list[0]:
+        bedroom = 1
+    else: 
+        bedroom = int(final_room_list[0][0])
+    page.close()
+    final = (policy_number,place_type,bedroom)  
+    return final
 
 def get_detailed_listing_database(html_file):
     """
@@ -202,12 +240,11 @@ class TestCases(unittest.TestCase):
             # check that the third element in the tuple is an int
             self.assertEqual(type(listing_information[2]), int)
         # check that the first listing in the html_list has policy number 'STR-0001541'
-
+        self.assertEqual(listing_informations[0][0],"STR-0001541")
         # check that the last listing in the html_list is a "Private Room"
-
+        self.assertEqual(listing_informations[-1][1],"Private Room")
         # check that the third listing has one bedroom
-
-        pass
+        self.assertEqual(listing_informations[2][-1],1)
 
     def test_get_detailed_listing_database(self):
         # call get_detailed_listing_database on "html_files/mission_district_search_results.html"
