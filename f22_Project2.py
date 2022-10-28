@@ -5,6 +5,8 @@ import os
 import csv
 import unittest
 
+#test_check_policy_numbers: last test case is wrong ask IA
+#ask about how many reviews for each file for extra credit
 
 def get_listings_from_search_results(html_file):
     """
@@ -206,9 +208,18 @@ def check_policy_numbers(data):
     ]
 
     """
-    pass
-
-
+    list_of_policy_numbers = []
+    correct_numbers = []
+    for i in data: 
+        list_of_policy_numbers.append(i[3])
+    for number in list_of_policy_numbers:
+            correct_numbers.extend(re.findall("20\d\d-00\d\d\d\dSTR", number))
+            correct_numbers.extend(re.findall("STR-000\d\d\d\d", number))
+            correct_numbers.extend(re.findall("Pending", number))
+            correct_numbers.extend(re.findall("Exempt", number))
+    final = [num for num in list_of_policy_numbers if num not in correct_numbers]
+    return final
+    
 def extra_credit(listing_id):
     """
     There are few exceptions to the requirement of listers obtaining licenses
@@ -223,7 +234,20 @@ def extra_credit(listing_id):
     gone over their 90 day limit, else return True, indicating the lister has
     never gone over their limit.
     """
-    pass
+    month_date = []
+    count = 0
+    page = open('html_files/listing_'+listing_id+'_reviews.html')
+    soup = BeautifulSoup(page,'html.parser')
+    review_list = soup.find_all('li',class_="_1f1oir5")
+    for review in review_list:
+        month_date.append(review.text)  
+    for i in month_date:
+        count+=1
+    page.close()
+    if count>90:
+        return False
+    else: 
+        return True
 
 
 class TestCases(unittest.TestCase):
@@ -316,12 +340,14 @@ class TestCases(unittest.TestCase):
         # check that the return value is a list
         self.assertEqual(type(invalid_listings), list)
         # check that there is exactly one element in the string
-
+        self.assertEqual(len(invalid_listings), 1)
         # check that the element in the list is a string
-
+        self.assertEqual(type(invalid_listings[0]), str)
         # check that the first element in the list is '16204265'
-        pass
-
+    
+    def test_extra_credit(self):
+        self.assertFalse(extra_credit('1944564'))
+        self.assertFalse(extra_credit('16204265'))
 
 if __name__ == '__main__':
     database = get_detailed_listing_database("html_files/mission_district_search_results.html")
