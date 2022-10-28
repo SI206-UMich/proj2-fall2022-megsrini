@@ -89,7 +89,11 @@ def get_listing_information(listing_id):
     policy_number = number_list[0]
     if "Exempt" in policy_number:
         policy_number = "Exempt"
+    elif "not needed" in policy_number:
+        policy_number = 'Exempt'
     elif "Pending" in policy_number: 
+        policy_number = "Pending"
+    elif "pending" in policy_number: 
         policy_number = "Pending"
     else: 
         policy_number = number_list[0]
@@ -170,8 +174,17 @@ def write_csv(data, filename):
     In order of least cost to most cost.
 
     This function should not return anything.
+    
+    
     """
-    pass
+    data.sort(key = lambda x: x[1])
+    headers = ["Listing Title", "Cost", "Listing ID", "Policy Number", "Place Type", "Number of Bedrooms",]
+    f = open(filename, 'w')
+    writer = csv.writer(f)
+    writer.writerow(headers)
+    for tuple in data: 
+        writer.writerow(tuple)
+    f.close()
 
 
 def check_policy_numbers(data):
@@ -288,12 +301,11 @@ class TestCases(unittest.TestCase):
         # check that there are 21 lines in the csv
         self.assertEqual(len(csv_lines), 21)
         # check that the header row is correct
-
+        self.assertEqual(csv_lines[0], ['Listing Title', 'Cost', 'Listing ID', 'Policy Number', 'Place Type', 'Number of Bedrooms'])
         # check that the next row is Private room in Mission District,82,51027324,Pending,Private Room,1
-
+        self.assertEqual(csv_lines[1], ['Private room in Mission District','82', '51027324', 'Pending', 'Private Room', '1'])
         # check that the last row is Apartment in Mission District,399,28668414,Pending,Entire Room,2
-
-        pass
+        self.assertEqual(csv_lines[-1], ['Apartment in Mission District','399', '28668414', 'Pending', 'Entire Room', '2'])
 
     def test_check_policy_numbers(self):
         # call get_detailed_listing_database on "html_files/mission_district_search_results.html"
