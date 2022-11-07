@@ -5,28 +5,8 @@ import os
 import csv
 import unittest
 
-#test_check_policy_numbers: last test case is wrong ask IA
-#ask about how many reviews for each file for extra credit
 
 def get_listings_from_search_results(html_file):
-    """
-    Write a function that creates a BeautifulSoup object on html_file. Parse
-    through the object and return a list of tuples containing:
-     a string of the title of the listing,
-     an int of the cost to rent for one night,
-     and a string of the listing id number
-    in the format given below. Make sure to turn costs into ints.
-
-    The listing id is found in the url of a listing. For example, for
-        https://www.airbnb.com/rooms/1944564
-    the listing id is 1944564.
-.
-
-    [
-        ('Title of Listing 1', 'Cost 1', 'Listing ID 1'),  # format
-        ('Loft in Mission District', 210, '1944564'),  # example
-    ]
-    """
     listing_title = []
     first_price_list = []
     final_price_list = []
@@ -55,29 +35,6 @@ def get_listings_from_search_results(html_file):
 
 
 def get_listing_information(listing_id):
-    """
-    Write a function to return relevant information in a tuple from an Airbnb listing id.
-    NOTE: Use the static files in the html_files folder, do NOT send requests to the actual website.
-    Information we're interested in:
-        string - Policy number: either a string of the policy number, "Pending", or "Exempt"
-            This field can be found in the section about the host.
-            Note that this is a text field the lister enters, this could be a policy number, or the word
-            "pending" or "exempt" or many others. Look at the raw data, decide how to categorize them into
-            the three categories.
-        string - Place type: either "Entire Room", "Private Room", or "Shared Room"
-            Note that this data field is not explicitly given from this page. Use the
-            following to categorize the data into these three fields.
-                "Private Room": the listing subtitle has the word "private" in it
-                "Shared Room": the listing subtitle has the word "shared" in it
-                "Entire Room": the listing subtitle has neither the word "private" nor "shared" in it
-        int - Number of bedrooms
-.
-    (
-        policy number,
-        place type,
-        number of bedrooms
-    )
-    """
     number_list = []
     type_list = []
     first_room_list = []
@@ -130,19 +87,6 @@ def get_listing_information(listing_id):
     return final
 
 def get_detailed_listing_database(html_file):
-    """
-    Write a function that calls the above two functions in order to return
-    the complete listing information using the functions you’ve created.
-    This function takes in a variable representing the location of the search results html file.
-    The return value should be in this format:
-
-
-    [
-        (Listing Title 1,Cost 1,Listing ID 1,Policy Number 1,Place Type 1,Number of Bedrooms 1),
-        (Listing Title 2,Cost 2,Listing ID 2,Policy Number 2,Place Type 2,Number of Bedrooms 2),
-        ...
-    ]
-    """
     listing_id_list = []
     first_function = get_listings_from_search_results(html_file)
     second_function = []
@@ -156,31 +100,8 @@ def get_detailed_listing_database(html_file):
     return final
 
 def write_csv(data, filename):
-    """
-    Write a function that takes in a list of tuples (called data, i.e. the
-    one that is returned by get_detailed_listing_database()), sorts the tuples in
-    ascending order by cost, writes the data to a csv file, and saves it
-    to the passed filename. The first row of the csv should contain
-    "Listing Title", "Cost", "Listing ID", "Policy Number", "Place Type", "Number of Bedrooms",
-    respectively as column headers. For each tuple in data, write a new
-    row to the csv, placing each element of the tuple in the correct column.
-
-    When you are done your CSV file should look like this:
-
-    Listing Title,Cost,Listing ID,Policy Number,Place Type,Number of Bedrooms
-    title1,cost1,id1,policy_number1,place_type1,num_bedrooms1
-    title2,cost2,id2,policy_number2,place_type2,num_bedrooms2
-    title3,cost3,id3,policy_number3,place_type3,num_bedrooms3
-    ...
-
-    In order of least cost to most cost.
-
-    This function should not return anything.
-    
-    
-    """
     data.sort(key = lambda x: x[1])
-    headers = ["Listing Title", "Cost", "Listing ID", "Policy Number", "Place Type", "Number of Bedrooms",]
+    headers = ["Listing Title", "Cost", "Listing ID", "Policy Number", "Place Type", "Number of Bedrooms"]
     f = open(filename, 'w')
     writer = csv.writer(f)
     writer.writerow(headers)
@@ -190,26 +111,9 @@ def write_csv(data, filename):
 
 
 def check_policy_numbers(data):
-    """
-    Write a function that takes in a list of tuples called data, (i.e. the one that is returned by
-    get_detailed_listing_database()), and parses through the policy number of each, validating the
-    policy number matches the policy number format. Ignore any pending or exempt listings.
-    Return the listing numbers with respective policy numbers that do not match the correct format.
-        Policy numbers are a reference to the business license San Francisco requires to operate a
-        short-term rental. These come in two forms, where # is a number from [0-9]:
-            20##-00####STR
-            STR-000####
-    .
-    Return value should look like this:
-    [
-        listing id 1,
-        listing id 2,
-        ...
-    ]
-
-    """
     list_of_policy_numbers = []
     correct_numbers = []
+    final  = []
     for i in data: 
         list_of_policy_numbers.append(i[3])
     for number in list_of_policy_numbers:
@@ -217,38 +121,35 @@ def check_policy_numbers(data):
             correct_numbers.extend(re.findall("STR-000\d\d\d\d", number))
             correct_numbers.extend(re.findall("Pending", number))
             correct_numbers.extend(re.findall("Exempt", number))
-    final = [num for num in list_of_policy_numbers if num not in correct_numbers]
+    for num in list_of_policy_numbers: 
+        if num not in correct_numbers: 
+            incorrect_number= num
+    for num in data: 
+        if num[3] == incorrect_number: 
+            final.append(num[2])
+    print(final)
     return final
     
 def extra_credit(listing_id):
-    """
-    There are few exceptions to the requirement of listers obtaining licenses
-    before listing their property for short term leases. One specific exception
-    is if the lister rents the room for less than 90 days of a year.
-
-    Write a function that takes in a listing id, scrapes the 'reviews' page
-    of the listing id for the months and years of each review (you can find two examples
-    in the html_files folder), and counts the number of reviews the apartment had each year.
-    If for any year, the number of reviews is greater than 90 (assuming very generously that
-    every reviewer only stayed for one day), return False, indicating the lister has
-    gone over their 90 day limit, else return True, indicating the lister has
-    never gone over their limit.
-    """
     month_date = []
     count = 0
+    review_dic = {}
     page = open('html_files/listing_'+listing_id+'_reviews.html')
     soup = BeautifulSoup(page,'html.parser')
     review_list = soup.find_all('li',class_="_1f1oir5")
     for review in review_list:
         month_date.append(review.text)  
     for i in month_date:
-        count+=1
+        if i[-4:] not in review_dic: 
+            review_dic[i[-4:]] = 1
+        else: 
+            review_dic[i[-4:]] +=1
+    final = dict(sorted(review_dic.items(), key=lambda item: item[1], reverse = True))
     page.close()
-    if count>90:
+    if list(final.values())[0]>90: 
         return False
     else: 
         return True
-
 
 class TestCases(unittest.TestCase):
 
@@ -344,9 +245,10 @@ class TestCases(unittest.TestCase):
         # check that the element in the list is a string
         self.assertEqual(type(invalid_listings[0]), str)
         # check that the first element in the list is '16204265'
+        self.assertEqual(invalid_listings[0],'16204265')
     
     def test_extra_credit(self):
-        self.assertFalse(extra_credit('1944564'))
+        self.assertTrue(extra_credit('1944564'))
         self.assertFalse(extra_credit('16204265'))
 
 if __name__ == '__main__':
